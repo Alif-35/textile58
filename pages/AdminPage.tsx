@@ -44,10 +44,13 @@ interface AdminPageProps {
   setBatchInfo: React.Dispatch<React.SetStateAction<BatchInfo>>;
   galleryAlbums: GalleryAlbum[];
   setGalleryAlbums: React.Dispatch<React.SetStateAction<GalleryAlbum[]>>;
+  onManualSync: () => Promise<void>;
+  isSyncing: boolean;
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({ 
-  notices, setNotices, materialsData, setMaterialsData, batchInfo, setBatchInfo, galleryAlbums, setGalleryAlbums 
+  notices, setNotices, materialsData, setMaterialsData, batchInfo, setBatchInfo, galleryAlbums, setGalleryAlbums,
+  onManualSync, isSyncing
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('admin_auth') === 'true';
@@ -1166,8 +1169,24 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
         {/* Save Changes Button Updated */}
         <div className="mt-20 flex justify-center px-4">
-          <button onClick={() => showStatus('Global Database Updated')} className="w-full md:w-auto px-8 md:px-16 py-5 md:py-6 bg-slate-900 text-emerald-600 border-2 border-emerald-600 font-black rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl shadow-emerald-900/30 flex items-center justify-center gap-4 hover:bg-emerald-600 hover:text-white transition-all active:scale-95 text-lg md:text-xl tracking-tighter uppercase">
-            <Save size={28} className="md:w-8 md:h-8"/> Synchronize System
+          <button 
+            onClick={async () => {
+              await onManualSync();
+              showStatus('Global Database Updated');
+            }} 
+            disabled={isSyncing}
+            className={`w-full md:w-auto px-8 md:px-16 py-5 md:py-6 bg-slate-900 border-2 font-black rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex items-center justify-center gap-4 transition-all active:scale-95 text-lg md:text-xl tracking-tighter uppercase ${isSyncing ? 'border-amber-500 text-amber-500 opacity-70' : 'border-emerald-600 text-emerald-600 shadow-emerald-900/30 hover:bg-emerald-600 hover:text-white'}`}
+          >
+            {isSyncing ? (
+              <>
+                <div className="w-6 h-6 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                Syncing System...
+              </>
+            ) : (
+              <>
+                <Save size={28} className="md:w-8 md:h-8"/> Synchronize System
+              </>
+            )}
           </button>
         </div>
       </div>

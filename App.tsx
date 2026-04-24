@@ -65,9 +65,25 @@ const App: React.FC = () => {
   const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>(() => safeParse('gallery_albums', INITIAL_GALLERY_ALBUMS));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Initial fetch from Supabase
+  const syncToRemote = async () => {
+    if (!isSupabaseConfigured || isLoading) return;
+    setIsSyncing(true);
+    try {
+      await saveSiteData({
+        notices,
+        materials_data: materialsData,
+        batch_info: batchInfo,
+        gallery_albums: galleryAlbums
+      });
+    } catch (e) {
+      console.warn('Sync failed:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setIsLoading(false);
@@ -83,6 +99,7 @@ const App: React.FC = () => {
 
       try {
         const remoteData = await fetchSiteData();
+        console.log('Fetched remote data:', remoteData);
         if (remoteData) {
           if (remoteData.notices) setNotices(remoteData.notices);
           if (remoteData.materials_data) setMaterialsData(remoteData.materials_data);
@@ -100,7 +117,7 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Save to LocalStorage and Sync to Supabase
+  // Save to LocalStorage and Sync to Supabase (with debounce)
   useEffect(() => {
     if (isLoading) return; // Prevent initial sync before data is loaded
 
@@ -109,22 +126,7 @@ const App: React.FC = () => {
     localStorage.setItem('batch_info', JSON.stringify(batchInfo));
     localStorage.setItem('gallery_albums', JSON.stringify(galleryAlbums));
 
-    if (!isSupabaseConfigured) return;
-
-    const syncToRemote = async () => {
-      try {
-        await saveSiteData({
-          notices,
-          materials_data: materialsData,
-          batch_info: batchInfo,
-          gallery_albums: galleryAlbums
-        });
-      } catch (e) {
-        console.warn('Sync failed:', e);
-      }
-    };
-
-    const debounceTimer = setTimeout(syncToRemote, 5000); // 5s debounce for stability
+    const debounceTimer = setTimeout(syncToRemote, 2000); // 2s debounce for stability
     return () => clearTimeout(debounceTimer);
   }, [notices, materialsData, batchInfo, galleryAlbums, isLoading]);
 
@@ -145,6 +147,12 @@ const App: React.FC = () => {
   return (
     <Router>
       <ScrollToTop />
+      {isSyncing && isSupabaseConfigured && (
+        <div className="fixed bottom-6 left-6 z-[100] bg-slate-900 text-white px-4 py-2 rounded-full shadow-2xl border border-emerald-500/30 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest">Syncing to Cloud</span>
+        </div>
+      )}
       <div className="min-h-screen flex flex-col font-sans text-slate-900 bg-slate-50">
         {/* Navigation */}
         <nav className="bg-white/70 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-50">
@@ -233,6 +241,8 @@ const App: React.FC = () => {
                   materialsData={materialsData} setMaterialsData={setMaterialsData}
                   batchInfo={batchInfo} setBatchInfo={setBatchInfo}
                   galleryAlbums={galleryAlbums} setGalleryAlbums={setGalleryAlbums}
+                  onManualSync={syncToRemote}
+                  isSyncing={isSyncing}
                 />
               } 
             />
