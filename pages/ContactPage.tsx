@@ -36,8 +36,12 @@ const ContactPage: React.FC<ContactPageProps> = ({ batchInfo }) => {
                 <div className="bg-slate-900 rounded-[2.9rem] p-8 md:p-10 flex flex-col items-center md:items-start text-center md:text-left h-full relative z-10">
                   {/* Avatar Section */}
                   <div className="relative mb-8">
-                    <div className="w-24 h-24 md:w-28 md:h-28 bg-emerald-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-emerald-900/50 relative z-10 group-hover:scale-105 transition-transform duration-500">
-                      <User size={48} className="md:w-14 md:h-14" />
+                    <div className="w-24 h-24 md:w-28 md:h-28 bg-emerald-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-emerald-900/50 relative z-10 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
+                      {cr.image ? (
+                        <img src={cr.image} alt={cr.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={48} className="md:w-14 md:h-14" />
+                      )}
                     </div>
                     <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-2xl flex items-center justify-center text-slate-900 shadow-xl z-20 transform rotate-12 group-hover:rotate-0 transition-transform">
                       <Sparkles size={20} className="text-emerald-600" />

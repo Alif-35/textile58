@@ -768,31 +768,131 @@ const AdminPage: React.FC<AdminPageProps> = ({
         {/* PROFILES TAB */}
         {activeTab === 'crs' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-slate-900 p-8 rounded-[3rem] border-2 border-emerald-600/20 shadow-2xl space-y-8">
-              <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
-                <User className="text-emerald-600" /> Batch Representatives
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-900 p-6 md:p-12 rounded-[3.5rem] border-2 border-emerald-600/20 shadow-2xl space-y-12">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                    <User className="text-emerald-600" /> Batch Representatives
+                  </h3>
+                  <p className="text-emerald-600/50 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Manage CR Profiles & Contact Details</p>
+                </div>
+                <button 
+                  onClick={() => setBatchInfo({...batchInfo, crs: [...batchInfo.crs, { name: 'New CR', email: '', phone: '', section: 'Section A' }]})}
+                  className="px-6 py-3 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-white hover:text-slate-900 transition-all flex items-center gap-2 shadow-xl shadow-emerald-900/20 active:scale-95 shrink-0"
+                >
+                  <Plus size={18} /> Add Representative
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-8">
                 {batchInfo.crs.map((cr, idx) => (
-                  <div key={idx} className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-                    <InputGroup 
-                      label="Full Name" 
-                      val={cr.name} 
-                      onChange={(v: string) => {
-                        const newCrs = [...batchInfo.crs];
-                        newCrs[idx].name = v;
-                        setBatchInfo({...batchInfo, crs: newCrs});
-                      }} 
-                    />
-                    <InputGroup 
-                      label="Contact Info" 
-                      val={cr.contact} 
-                      onChange={(v: string) => {
-                        const newCrs = [...batchInfo.crs];
-                        newCrs[idx].contact = v;
-                        setBatchInfo({...batchInfo, crs: newCrs});
-                      }} 
-                    />
+                  <div key={idx} className="bg-white p-8 rounded-[3rem] border border-white/10 space-y-8 relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-600/5 rounded-full -mr-12 -mt-12 group-hover:bg-emerald-600/10 transition-all"></div>
+                    
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* CR Image Section */}
+                      <div className="lg:w-48 shrink-0 space-y-4">
+                        <div className="aspect-square bg-slate-900 rounded-[2.5rem] border-2 border-slate-100 overflow-hidden relative shadow-xl">
+                          {cr.image ? (
+                            <img src={cr.image} alt={cr.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-emerald-600/20">
+                              <User size={80} />
+                            </div>
+                          )}
+                          <label className="absolute inset-0 bg-slate-950/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                            <Upload className="text-white" size={32} />
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    const newCrs = [...batchInfo.crs];
+                                    newCrs[idx].image = reader.result as string;
+                                    setBatchInfo({...batchInfo, crs: newCrs});
+                                    showStatus('Profile Image Updated');
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center">Click to upload photo</p>
+                      </div>
+
+                      <div className="flex-grow space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="p-2 bg-emerald-600 rounded-lg text-white"><Sparkles size={14}/></span>
+                            <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Personal Identity</h4>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const newCrs = batchInfo.crs.filter((_, i) => i !== idx);
+                              setBatchInfo({...batchInfo, crs: newCrs});
+                            }}
+                            className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                            title="Remove Profile"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputGroup 
+                            label="CR Full Name" 
+                            val={cr.name} 
+                            onChange={(v: string) => {
+                              const newCrs = [...batchInfo.crs];
+                              newCrs[idx].name = v;
+                              setBatchInfo({...batchInfo, crs: newCrs});
+                            }} 
+                          />
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] ml-1">Section Assignment</label>
+                            <select 
+                              className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-transparent font-bold text-slate-900 text-base focus:ring-4 focus:ring-emerald-600/5 focus:border-emerald-600 outline-none transition-all"
+                              value={cr.section}
+                              onChange={(e) => {
+                                const newCrs = [...batchInfo.crs];
+                                newCrs[idx].section = e.target.value;
+                                setBatchInfo({...batchInfo, crs: newCrs});
+                              }}
+                            >
+                              <option value="Section A">Section A</option>
+                              <option value="Section B">Section B</option>
+                              <option value="Common">Common Representative</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
+                          <InputGroup 
+                            label="Institutional Email" 
+                            val={cr.email} 
+                            onChange={(v: string) => {
+                              const newCrs = [...batchInfo.crs];
+                              newCrs[idx].email = v;
+                              setBatchInfo({...batchInfo, crs: newCrs});
+                            }} 
+                          />
+                          <InputGroup 
+                            label="Personal Phone" 
+                            val={cr.phone} 
+                            onChange={(v: string) => {
+                              const newCrs = [...batchInfo.crs];
+                              newCrs[idx].phone = v;
+                              setBatchInfo({...batchInfo, crs: newCrs});
+                            }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
