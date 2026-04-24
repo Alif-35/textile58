@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Camera, Layers, X, Maximize2, ImageOff, Filter, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, Layers, X, Maximize2, ImageOff, Filter, ChevronLeft, ChevronRight, Download, Sparkles } from 'lucide-react';
 import { GalleryAlbum } from '../types';
 
 interface GalleryPageProps {
@@ -9,6 +9,18 @@ interface GalleryPageProps {
 const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<{albumId: string, index: number} | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [slideshowIndex, setSlideshowIndex] = useState(0);
+
+  // Slideshow logic for automatic preview
+  const allImages = albums.flatMap(album => album.images.filter(img => img.trim() !== '').map(img => img));
+  
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setSlideshowIndex(prev => (prev + 1) % allImages.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
 
   // Helper to convert Google Drive links to direct image links
   const resolveImageUrl = (url: string) => {
@@ -69,13 +81,50 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
   return (
     <div className="py-12 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-10 md:mb-12">
-          <div className="inline-flex p-2.5 md:p-3 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl mb-4 shadow-sm">
-            <Camera size={24} className="md:w-8 md:h-8" />
+        {/* Header with Slideshow Preview */}
+        <div className="mb-12 md:mb-16">
+          <div className="relative h-[300px] md:h-[450px] w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl border-4 border-slate-50 group">
+            {allImages.length > 0 ? (
+              <>
+                <img 
+                  key={slideshowIndex}
+                  src={resolveImageUrl(allImages[slideshowIndex])} 
+                  alt="Batch Memories" 
+                  className="w-full h-full object-cover animate-in fade-in zoom-in duration-1000"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex flex-col items-center justify-center text-center px-6">
+                  <div className="inline-flex p-3 md:p-4 bg-emerald-600 text-white rounded-2xl mb-6 shadow-xl shadow-emerald-900/40 animate-bounce">
+                    <Camera size={24} className="md:w-8 md:h-8" />
+                  </div>
+                  <h1 className="text-3xl md:text-6xl font-black text-white mb-4 tracking-tight drop-shadow-lg">Memory Lane</h1>
+                  <p className="text-emerald-50 text-sm md:text-xl max-w-xl mx-auto font-medium opacity-90">Capturing the legacy of Textile Batch 58</p>
+                  
+                  {/* Progress Indicators */}
+                  <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2">
+                    {allImages.slice(0, 10).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`h-1 rounded-full transition-all duration-500 ${i === slideshowIndex % 10 ? 'w-8 bg-emerald-500' : 'w-2 bg-white/30'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center p-8">
+                <div className="inline-flex p-2.5 md:p-3 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl mb-4 shadow-sm">
+                  <Camera size={24} className="md:w-8 md:h-8" />
+                </div>
+                <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">Memory Lane</h1>
+                <p className="text-slate-500 text-sm md:text-base max-w-xl mx-auto">Capturing the journey of Textile Batch 58.</p>
+              </div>
+            )}
+            
+            {/* Aesthetic Badge */}
+            <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md border border-white/30 px-4 py-2 rounded-full flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest">
+              <Sparkles size={12}/> Live Archive
+            </div>
           </div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">Memory Lane</h1>
-          <p className="text-slate-500 text-sm md:text-base max-w-xl mx-auto">Capturing the journey of Textile Batch 58.</p>
         </div>
 
         {/* Category Filter */}
