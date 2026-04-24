@@ -103,7 +103,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
     // Google Drive / Docs
     if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com')) {
       const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
-      if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+      // Using thumbnail endpoint which is often more reliable for public embedding
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
     }
     
     // Imgur

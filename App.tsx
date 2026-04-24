@@ -74,11 +74,17 @@ const App: React.FC = () => {
     setIsSyncing(true);
     setSyncError(null);
     try {
+      // Clean up data before saving
+      const cleanedGallery = galleryAlbums.map(album => ({
+        ...album,
+        images: album.images.filter(img => img.trim() !== '')
+      })).filter(album => album.images.length > 0 || album.category !== 'New Album');
+
       await saveSiteData({
         notices,
         materials_data: materialsData,
         batch_info: batchInfo,
-        gallery_albums: galleryAlbums
+        gallery_albums: cleanedGallery
       });
     } catch (e: any) {
       console.warn('Sync failed:', e);

@@ -18,7 +18,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
     // Google Drive / Docs
     if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com')) {
       const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
-      if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+      // Using thumbnail endpoint which is often more reliable for public embedding
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
     }
     
     // Imgur
@@ -33,15 +34,25 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
       return trimmedUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/\?dl=[01]/, '');
     }
 
+    // Handle iframe/embed code if user accidentally pastes it
+    if (trimmedUrl.startsWith('<iframe')) {
+      const srcMatch = trimmedUrl.match(/src="([^"]+)"/);
+      if (srcMatch) return resolveImageUrl(srcMatch[1]);
+    }
+
     return trimmedUrl;
   };
 
   const categories = ['All', ...albums.map(a => a.category)];
-  const filteredAlbums = activeCategory === 'All' 
+  const filteredAlbums = (activeCategory === 'All' 
     ? albums 
-    : albums.filter(a => a.category === activeCategory);
+    : albums.filter(a => a.category === activeCategory))
+    .map(album => ({
+      ...album,
+      images: album.images.filter(img => img.trim() !== '')
+    }));
 
-  const currentAlbum = selectedImageIndex ? albums.find(a => a.id === selectedImageIndex.albumId) : null;
+  const currentAlbum = selectedImageIndex ? filteredAlbums.find(a => a.id === selectedImageIndex.albumId) : null;
   const currentImageUrl = currentAlbum && selectedImageIndex ? resolveImageUrl(currentAlbum.images[selectedImageIndex.index]) : null;
 
   const navigateImage = (direction: 'prev' | 'next') => {
@@ -103,14 +114,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
                   <div>
                     <h2 className="text-lg md:text-xl font-black text-slate-900 leading-none">{album.category}</h2>
                     <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 block">
-                      {album.images.filter(img => img.trim() !== '').length} Photos
+                      {album.images.length} Photos
                     </span>
                   </div>
                   <div className="h-px bg-gradient-to-r from-slate-100 to-transparent flex-grow"></div>
                 </div>
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
-                  {album.images.filter(img => img.trim() !== '').map((img, idx) => (
+                  {album.images.map((img, idx) => (
                     <div 
                       key={idx} 
                       onClick={() => setSelectedImageIndex({ albumId: album.id, index: idx })}
