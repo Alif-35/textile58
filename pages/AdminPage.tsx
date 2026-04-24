@@ -1194,7 +1194,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     </div>
 
                     <p className="text-slate-600 text-xs leading-relaxed">
-                      If your data isn't showing up on other devices, ensure you have created the table correctly in Supabase.
+                      If you see <span className="text-rose-600 font-bold">"Invalid path specified in request"</span>, it likely means the table hasn't been created in Supabase yet. Follow the guide below:
                     </p>
 
                     <button 
