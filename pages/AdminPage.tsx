@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { 
   Lock, 
   Plus, 
@@ -24,6 +24,7 @@ import {
   Sparkles,
   FileSearch,
   Upload,
+  Database,
   Github,
   Twitter,
   Linkedin,
@@ -58,6 +59,19 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'notices' | 'materials' | 'crs' | 'donation' | 'gallery' | 'settings'>('notices');
   const [status, setStatus] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
+
+  const handleManualSync = async () => {
+    setSyncStatus(null);
+    try {
+      await onManualSync();
+      setSyncStatus('Successfully synced to cloud');
+      setTimeout(() => setSyncStatus(null), 5000);
+    } catch (err: any) {
+      setSyncStatus(`Error: ${err.message || 'Sync failed'}`);
+    }
+  };
 
   const [mPath, setMPath] = useState<{
     category: keyof MaterialData | null;
@@ -1162,18 +1176,70 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   </div>
                   <p className="text-[10px] text-slate-500 font-medium italic">These links will be updated in the global website footer.</p>
                 </div>
+
+                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl space-y-6">
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                    <Database className="text-emerald-600" /> Database Synchronization Setup
+                  </h3>
+                  
+                  <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`}></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Supabase Connection</span>
+                      </div>
+                      <span className="text-[10px] font-black text-slate-400">
+                        {isSupabaseConfigured ? 'READY' : 'CREDENTIALS MISSING'}
+                      </span>
+                    </div>
+
+                    <p className="text-slate-600 text-xs leading-relaxed">
+                      If your data isn't showing up on other devices, ensure you have created the table correctly in Supabase.
+                    </p>
+
+                    <button 
+                      onClick={() => setShowSqlGuide(!showSqlGuide)}
+                      className="w-full py-3 bg-slate-900 text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all shadow-lg"
+                    >
+                      {showSqlGuide ? "Hide Setup Instructions" : "Show Setup Instructions"}
+                    </button>
+
+                    {showSqlGuide && (
+                      <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-3 ml-2">SQL Script for Supabase Editor:</p>
+                        <pre className="p-5 bg-slate-900 text-emerald-400 text-[10px] font-mono rounded-2xl overflow-x-auto border border-emerald-900/30 whitespace-pre">
+{`CREATE TABLE IF NOT EXISTS site_config (
+  id TEXT PRIMARY KEY,
+  notices JSONB DEFAULT '[]',
+  materials_data JSONB DEFAULT '{}',
+  batch_info JSONB DEFAULT '{}',
+  gallery_albums JSONB DEFAULT '[]',
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE site_config DISABLE ROW LEVEL SECURITY;`}
+                        </pre>
+                        <p className="mt-4 text-[9px] text-amber-600 font-bold leading-relaxed bg-amber-50 p-4 rounded-xl border border-amber-100">
+                          NOTE: Disabling RLS (Row Level Security) allows anyone with your public keys to read/write. For better security, keep RLS enabled and add policies for "Enable access for authenticated users only" if you use Supabase Auth.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Save Changes Button Updated */}
-        <div className="mt-20 flex justify-center px-4">
+        <div className="mt-20 flex flex-col items-center gap-4 px-4">
+          {syncStatus && (
+            <div className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] animate-in fade-in zoom-in ${syncStatus.startsWith('Error') ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+              {syncStatus}
+            </div>
+          )}
           <button 
-            onClick={async () => {
-              await onManualSync();
-              showStatus('Global Database Updated');
-            }} 
+            onClick={handleManualSync} 
             disabled={isSyncing}
             className={`w-full md:w-auto px-8 md:px-16 py-5 md:py-6 bg-slate-900 border-2 font-black rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex items-center justify-center gap-4 transition-all active:scale-95 text-lg md:text-xl tracking-tighter uppercase ${isSyncing ? 'border-amber-500 text-amber-500 opacity-70' : 'border-emerald-600 text-emerald-600 shadow-emerald-900/30 hover:bg-emerald-600 hover:text-white'}`}
           >

@@ -66,11 +66,13 @@ const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const syncToRemote = async () => {
     if (!isSupabaseConfigured || isLoading) return;
     setIsSyncing(true);
+    setSyncError(null);
     try {
       await saveSiteData({
         notices,
@@ -78,8 +80,9 @@ const App: React.FC = () => {
         batch_info: batchInfo,
         gallery_albums: galleryAlbums
       });
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Sync failed:', e);
+      setSyncError(e?.message || 'Synchronization failed');
     } finally {
       setIsSyncing(false);
     }
@@ -151,6 +154,14 @@ const App: React.FC = () => {
         <div className="fixed bottom-6 left-6 z-[100] bg-slate-900 text-white px-4 py-2 rounded-full shadow-2xl border border-emerald-500/30 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
           <span className="text-[10px] font-black uppercase tracking-widest">Syncing to Cloud</span>
+        </div>
+      )}
+      {syncError && (
+        <div className="fixed bottom-6 right-6 z-[100] bg-rose-600 text-white px-4 py-2 rounded-xl shadow-2xl border border-rose-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <span className="text-[10px] font-black uppercase tracking-widest">Cloud Error: {syncError}</span>
+          <button onClick={() => setSyncError(null)} className="hover:bg-rose-500 p-1 rounded-full transition-colors">
+            <X size={14} />
+          </button>
         </div>
       )}
       <div className="min-h-screen flex flex-col font-sans text-slate-900 bg-slate-50">

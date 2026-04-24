@@ -33,17 +33,13 @@ export const fetchSiteData = async () => {
 };
 
 export const saveSiteData = async (siteData: SiteData) => {
-  try {
-    const { error } = await supabase
-      .from('site_config')
-      .upsert({
-        id: DATA_ID,
-        ...siteData,
-        updated_at: new Date().toISOString()
-      });
+  const { error } = await supabase
+    .from('site_config')
+    .upsert({
+      id: DATA_ID,
+      ...siteData,
+      updated_at: new Date().toISOString()
+    });
 
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error saving to Supabase:', error);
-  }
+  if (error) throw error;
 };
