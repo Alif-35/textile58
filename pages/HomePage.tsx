@@ -26,9 +26,10 @@ const HomePage: React.FC<HomePageProps> = ({ notices, batchInfo }) => {
   const getDirectImageUrl = (url: string) => {
     if (!url) return '';
     const trimmedUrl = url.trim();
-    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com')) {
+    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com') || trimmedUrl.includes('drive.usercontent.google.com')) {
+      if (trimmedUrl.includes('/folders/')) return '';
       const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
-      if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
     }
     if (trimmedUrl.includes('imgur.com')) {
       if (trimmedUrl.includes('i.imgur.com')) return trimmedUrl;

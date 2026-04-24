@@ -101,10 +101,15 @@ const AdminPage: React.FC<AdminPageProps> = ({
     const trimmedUrl = url.trim();
     
     // Google Drive / Docs
-    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com')) {
+    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com') || trimmedUrl.includes('drive.usercontent.google.com')) {
       const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
-      // Using thumbnail endpoint which is often more reliable for public embedding
-      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+      
+      // Handle folder links - they won't work as images
+      if (trimmedUrl.includes('/folders/')) {
+        console.warn('Google Drive Folder links cannot be used as images. Please provide a direct file link.');
+        return '';
+      }
     }
     
     // Imgur
@@ -795,7 +800,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       <div className="lg:w-48 shrink-0 space-y-4">
                         <div className="aspect-square bg-slate-900 rounded-[2.5rem] border-2 border-slate-100 overflow-hidden relative shadow-xl">
                           {cr.image ? (
-                            <img src={cr.image} alt={cr.name} className="w-full h-full object-cover" />
+                            <img src={getDirectImageUrl(cr.image)} alt={cr.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-emerald-600/20">
                               <User size={80} />
@@ -995,14 +1000,20 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           Clear All
                         </button>
                         <p className="text-[10px] text-slate-400 font-medium italic">
-                          Tip: Paste direct links or Google Drive links.
+                          Tip: Paste direct links or Google Drive links. 
+                          <span className="text-emerald-600 font-bold block mt-1">Drive links MUST be set to "Anyone with the link can view".</span>
                         </p>
                       </div>
                     </div>
                     
                     {/* Live Preview Grid */}
                     <div className="bg-white rounded-2xl p-4 border-2 border-slate-100 overflow-y-auto max-h-[300px] no-scrollbar">
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-4">Live Preview ({album.images.filter(i => i.trim()).length})</p>
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Live Preview ({album.images.filter(i => i.trim()).length})</p>
+                        <a href="https://drive.google.com" target="_blank" rel="noopener noreferrer" className="text-[8px] font-black text-emerald-600 uppercase tracking-widest hover:underline flex items-center gap-1">
+                          Drive Settings <ExternalLink size={10}/>
+                        </a>
+                      </div>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {album.images.filter(i => i.trim()).map((img, idx) => (
                           <div key={idx} className="aspect-square rounded-lg bg-slate-50 border border-slate-100 overflow-hidden relative group">
@@ -1082,7 +1093,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   <div className="aspect-video rounded-xl overflow-hidden bg-slate-800 border border-white/10 relative">
                     {batchInfo.heroImage ? (
                       <img 
-                        src={batchInfo.heroImage} 
+                        src={getDirectImageUrl(batchInfo.heroImage)} 
                         alt="Hero Preview" 
                         className="w-full h-full object-cover" 
                         referrerPolicy="no-referrer"
@@ -1127,8 +1138,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   </div>
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-4">
                     <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden shadow-lg">
-                      {batchInfo.logo && (batchInfo.logo.startsWith('http') || batchInfo.logo.startsWith('data:')) ? (
-                        <img src={batchInfo.logo} alt="Logo Preview" className="w-full h-full object-cover" />
+                      {batchInfo.logo && (batchInfo.logo.startsWith('http') || batchInfo.logo.startsWith('data:') || batchInfo.logo.includes('drive.google.com')) ? (
+                        <img src={getDirectImageUrl(batchInfo.logo)} alt="Logo Preview" className="w-full h-full object-cover" />
                       ) : (
                         batchInfo.logo || 'S'
                       )}

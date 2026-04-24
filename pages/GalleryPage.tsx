@@ -16,10 +16,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ albums }) => {
     const trimmedUrl = url.trim();
     
     // Google Drive / Docs
-    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com')) {
+    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com') || trimmedUrl.includes('drive.usercontent.google.com')) {
       const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
-      // Using thumbnail endpoint which is often more reliable for public embedding
-      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+      if (trimmedUrl.includes('/folders/')) return '';
     }
     
     // Imgur

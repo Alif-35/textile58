@@ -10,6 +10,25 @@ const ContactPage: React.FC<ContactPageProps> = ({ batchInfo }) => {
   const [formData, setFormData] = useState({ name: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
+  const resolveImageUrl = (url: string) => {
+    if (!url) return '';
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.includes('drive.google.com') || trimmedUrl.includes('docs.google.com') || trimmedUrl.includes('drive.usercontent.google.com')) {
+      if (trimmedUrl.includes('/folders/')) return '';
+      const id = trimmedUrl.match(/\/d\/([^/?#\s]+)/)?.[1] || trimmedUrl.match(/[?&]id=([^&\s]+)/)?.[1];
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+    }
+    if (trimmedUrl.includes('imgur.com')) {
+      if (trimmedUrl.includes('i.imgur.com')) return trimmedUrl;
+      const id = trimmedUrl.split('/').pop()?.split(/[?#]/)[0];
+      if (id && id.length > 3) return `https://i.imgur.com/${id}.jpg`;
+    }
+    if (trimmedUrl.includes('dropbox.com')) {
+      return trimmedUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/\?dl=[01]/, '');
+    }
+    return trimmedUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.message.trim()) return;
@@ -38,7 +57,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ batchInfo }) => {
                   <div className="relative mb-8">
                     <div className="w-24 h-24 md:w-28 md:h-28 bg-emerald-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-emerald-900/50 relative z-10 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                       {cr.image ? (
-                        <img src={cr.image} alt={cr.name} className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(cr.image)} alt={cr.name} className="w-full h-full object-cover" />
                       ) : (
                         <User size={48} className="md:w-14 md:h-14" />
                       )}
